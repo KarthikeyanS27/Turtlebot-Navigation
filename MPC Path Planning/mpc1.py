@@ -13,7 +13,7 @@ v_max = 1 # max velocity
 phi_max = 60 # max steering angle in degrees
 
 	# Generate control sequences	
-num_v = 6 # number of potential velocity commands
+num_v = 4 # number of potential velocity commands
 num_phi = 4 # number of potential steering angle commands
 
 # positional coordinates
@@ -33,6 +33,10 @@ min_buffer = 0.3
 v_sequence = gen_sequence(num_v, v_max) # sequence of potential velocity commands
 phi_sequence = gen_sequence(num_phi, phi_max) # sequence of potential steering angle commands
 combos = [[a,b] for a in v_sequence for b in phi_sequence]
+
+print(v_sequence)
+print(phi_sequence)
+print()
 print(combos)
 
 while(goalReached==False):
@@ -42,7 +46,7 @@ while(goalReached==False):
     # It is mainly a wrapper over  
     # recursive function printAllKLengthRec()
     # https://www.geeksforgeeks.org/print-all-combinations-of-given-length/ 
-    def printAllKLength(set, k):
+    def printAllKLength(set, l_seq):
 
         initialScore = 1e100
         optimal = [""]*k
@@ -50,7 +54,7 @@ while(goalReached==False):
       
         n = len(set)  
         prefix = []
-        return printAllKLengthRec(set, prefix, n, k, optimal)
+        return printAllKLengthRec(set, prefix, n, l_seq, optimal)
       
     # The main recursive method 
     # to print all possible  
@@ -97,25 +101,14 @@ while(goalReached==False):
 
         k+=1
 
-    plt.scatter(x, y)
-    plt.scatter(goal[0], goal[1], c="green")
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    plt.title("MPC Based Path Planning")
-
-    for center in obstacles:
-        circle = plt.Circle((center[0], center[1]), min_buffer, color='r')
-        ax = plt.gca()
-        ax.add_artist(circle)
-
-    ax.axis("equal")
-
-    plt.show()
+    plotPath(x, y, goal, obstacles, min_buffer)
 
     goalReached = goalCheck(x, y, goal, goalThresh)
+    #goalReached = True
 
     if(goalReached==True):
         print("Goal Reached!")
+
         break
 
 

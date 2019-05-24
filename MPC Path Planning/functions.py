@@ -1,6 +1,7 @@
 import numpy as np
 import itertools
 import math
+import matplotlib.pyplot as plt
 
 def gen_sequence(numToGenerate, maxInput):
     step = 2*maxInput/(numToGenerate-1)
@@ -74,16 +75,22 @@ def goalCheck(x, y, goal, goalThresh):
     else:
         return False
 
-def csvtoarray(csvfile = 'floorplan.csv'):
-    datafile = open(csvfile, 'r')
-    datareader = csv.reader(datafile, delimiter=',')
-    data = []
-    for row in datareader:
-        data.append(row)
-    # print(data)
-    # print(data[0][1])
-    # data[y][x], origin at top left corner
-    return(data)
+def plotPath(x, y, goal, obstacles, min_buffer):
+    plt.scatter(x, y)
+    plt.scatter(goal[0], goal[1], c="green")
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    plt.title("MPC Based Path Planning")
+
+    for center in obstacles:
+        circle = plt.Circle((center[0], center[1]), min_buffer, color='r')
+        ax = plt.gca()
+        ax.add_artist(circle)
+
+    ax.axis("equal")
+
+    plt.show()
+
 
 
 
