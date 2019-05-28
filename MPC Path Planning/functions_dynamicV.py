@@ -3,6 +3,7 @@ import itertools
 import math
 import matplotlib.pyplot as plt
 import matplotlib.patches as patches
+from scipy.interpolate import interp1d
 
 def gen_sequence_phi(numToGenerate, maxInput):
     step = 2*maxInput/(numToGenerate-1)
@@ -15,23 +16,32 @@ def gen_sequence_phi(numToGenerate, maxInput):
 
 def gen_sequence_v(numToGenerate, maxInput):
     start = 0
-    return np.linspace(start, maxInput, numToGenerate) 
+    step = (maxInput - start)/(numToGenerate-2)
+    v_sequence = [-step]
+    return np.append(v_sequence, np.linspace(start, maxInput, numToGenerate-1))
 
 
-def calc_score(control, dt, H_p, x, y, v, current_heading, k, goal, obstacles, avoidance_radius, min_return):
-    W_v = 1
-    W_phi = 3
+def calc_score(control, dt, H_p, x, y, v, v_max, current_heading, k, goal, obstacles, avoidance_radius, circles_radius):
+    W_v = 1 # generally leave at one if don't mind changes in velocity that much
+    W_phi = 4 # increase to tune amount of turning, higher good to prevent going in circles (continuing to turn) but need low enough to have flexible route
     W_dist = 1 # leave as one because sum_dist already relatively large
-    W_obs = 1
+    W_obs = 1 # leave at 1, cost_obs applies weight
     cost_obs = 1e6 # only gets applied if within obstacle zone
-    W_return = 1
-    cost_return = 1e5 # only gets applied if velocity below certain threshold
+    W_stuck = 1 # leave at 1, cost_return applies weight
+    cost_stuck = 1e5 # only gets applied if velocity below certain threshold
+    W_fast = 1
+    cost_circles = 2
+    W_circles = 2
 
     # velocity change
     sum_v = (control[0][0] - v[-1])**2 # initialize with difference in first applied move from current state
+    sum_fast = (control[0][0] - v_max)**2
     for i in range(H_p-1):
         sum_v = sum_v + (control[i+1][0]-control[i][0])**2
+        sum_fast = sum_fast + (control[i+1][0] - v_max)**2
     J_v = W_v*sum_v
+    J_fast = W_fast*sum_fast
+
     
     # steer angle change, want to minimize entirely to limit steering change
     sum_phi = 0 # initialize with difference in first applied move from current state
@@ -42,7 +52,8 @@ def calc_score(control, dt, H_p, x, y, v, current_heading, k, goal, obstacles, a
     # distance to goal, distance to obstacles, backtrack prevention
     sum_dist = 0
     sum_obs = 0
-    sum_return = 0  # costly to return to same position, want to keep exploring if stuck
+    sum_stuck = 0  # costly to return to same position, want to keep exploring if stuck
+    sum_circles = 0
     x_control = x.copy()
     y_control = y.copy()
 
@@ -63,6 +74,7 @@ def calc_score(control, dt, H_p, x, y, v, current_heading, k, goal, obstacles, a
         # print(x_control[k+i], y_control[k+i])
        
         sum_dist = sum_dist + math.sqrt( (x2-goal[0])**2 + (y2-goal[1])**2 )
+        #print(obstacles)
 
         for j in range(len(obstacles)):
             # clearance = math.sqrt( (x_control[k+i]-obstacles[j][0])**2 + (y_control[k+i]-obstacles[j][1])**2 )
@@ -73,7 +85,17 @@ def calc_score(control, dt, H_p, x, y, v, current_heading, k, goal, obstacles, a
 
         # keep robot moving with cost for low velocity
         if new_v < 0.1:
-            sum_return = sum_return + cost_return
+            sum_stuck = sum_stuck + cost_stuck
+
+        dist_circles_to_check = 40
+        if len(x_control) < dist_circles_to_check:
+            dist_circles_to_check = len(x_control)
+
+        for j in range(len(x)-dist_circles_to_check, len(x)):
+            dist_circles = math.sqrt( (x2-x_control[j])**2 +(y2-y_control[j])**2 )
+            if dist_circles <= circles_radius:
+                sum_circles = sum_circles + cost_circles
+
 
         # update arrays for prediction horizon steps
         x_control.append(x2)
@@ -82,13 +104,12 @@ def calc_score(control, dt, H_p, x, y, v, current_heading, k, goal, obstacles, a
 
     J_dist = W_dist*sum_dist
     J_obs = W_obs*sum_obs
-    J_return = W_return*sum_return
+    J_stuck = W_stuck*sum_stuck
+    J_circles = W_circles*sum_circles
 
-    objective = J_v + J_phi + J_dist + J_obs + J_return
+    objective = J_v + J_phi + J_dist + J_obs + J_stuck + J_fast + J_circles
 
-    J_v, J_phi, J_dist, J_obs, J_return
-
-    return J_v, J_phi, J_dist, J_obs, J_return
+    return J_v, J_phi, J_dist, J_obs, J_stuck, J_fast, J_circles
 
 
 def calc_position(x1, y1, v, dt, phi):
@@ -111,10 +132,20 @@ def goalCheck(x, y, goal, goalThresh):
 
 def plotPath(robot_dim, x, y, dt, current_heading, goal, goalThresh, obstacles, obstacle_radius, avoidance_radius, optimal_plot, active_plot):
     
-    ax = plt.gca()
+    # ax = plt.gca()
+    fig, ax = plt.subplots()
+
+    new_obstacle = []
+
+    def onclick(event):
+        if event.xdata != None and event.ydata != None:
+            new_obstacle.append([event.xdata, event.ydata])
+
+    cid = fig.canvas.mpl_connect('button_press_event', onclick)
+
 
     # plot path and goal
-    plt.scatter(x, y)
+    plt.plot(x, y, marker=".")
     plt.scatter(goal[0], goal[1], color="green")
     goal_circle = plt.Circle((goal[0], goal[1]), goalThresh, alpha=0.2, color='green')
     ax.add_artist(goal_circle)
@@ -147,20 +178,32 @@ def plotPath(robot_dim, x, y, dt, current_heading, goal, goalThresh, obstacles, 
     plt.ylabel("Y")
     plt.title("MPC Based Path Planning")
     ax.axis("equal")
+    lower = -2
+    upper = 4.5
 
-    if active_plot == 0:
-        # plot future moves
+    if active_plot == 0: # go as fast as time steps allow, plot future moves
         plt.scatter(optimal_plot[0][:], optimal_plot[1][:], color="orange", marker="x")
-
+        ax.set_xlim([lower, upper])
+        ax.set_ylim([lower, upper])
+        ax.autoscale(enable=False, axis='both')
         plt.show(block=False)
-        plt.pause(dt)
+        plt.pause(0.01)
         plt.close()
-    elif active_plot == 1:
-        # plot future moves
+    elif active_plot == 1: # stepwise, plot future moves
         plt.scatter(optimal_plot[0][:], optimal_plot[1][:], color="orange", marker="x")
+        ax.set_xlim([lower, upper])
+        ax.set_ylim([lower, upper])
+        ax.autoscale(enable=False, axis='both')
         plt.show()
-    else:
+    else: # stepwise, only plot current moves
+        plt.title("MPC Based Path Planning \n------->  Complete!  <-------")
+        ax.set_xlim([lower, upper])
+        ax.set_ylim([lower, upper])
+        ax.autoscale(enable=False, axis='both')
         plt.show()
+
+    return new_obstacle
+
 
 
 
