@@ -16,9 +16,9 @@ def gen_sequence_phi(numToGenerate, maxInput):
 
 def gen_sequence_v(numToGenerate, maxInput):
     start = 0
-    step = (maxInput - start)/(numToGenerate-2)
+    step = (maxInput - start)/(numToGenerate-1)
     v_sequence = [-step]
-    return np.append(v_sequence, np.linspace(start, maxInput, numToGenerate-1))
+    return np.append(v_sequence, np.linspace(start, maxInput, numToGenerate))
 
 
 def calc_score(control, dt, H_p, x, y, v, v_max, current_heading, k, goal, obstacles, avoidance_radius, circles_radius):
@@ -185,7 +185,7 @@ def plotPath(robot_dim, x, y, dt, current_heading, goal, goalThresh, obstacles, 
         plt.scatter(optimal_plot[0][:], optimal_plot[1][:], color="orange", marker="x")
         ax.set_xlim([lower, upper])
         ax.set_ylim([lower, upper])
-        ax.autoscale(enable=False, axis='both')
+        ax.autoscale(enable=True, axis='both')
         plt.show(block=False)
         plt.pause(0.01)
         plt.close()
@@ -193,13 +193,13 @@ def plotPath(robot_dim, x, y, dt, current_heading, goal, goalThresh, obstacles, 
         plt.scatter(optimal_plot[0][:], optimal_plot[1][:], color="orange", marker="x")
         ax.set_xlim([lower, upper])
         ax.set_ylim([lower, upper])
-        ax.autoscale(enable=False, axis='both')
+        ax.autoscale(enable=True, axis='both')
         plt.show()
     else: # stepwise, only plot current moves
         plt.title("MPC Based Path Planning \n------->  Complete!  <-------")
         ax.set_xlim([lower, upper])
         ax.set_ylim([lower, upper])
-        ax.autoscale(enable=False, axis='both')
+        ax.autoscale(enable=True, axis='both')
         plt.show()
 
     return new_obstacle

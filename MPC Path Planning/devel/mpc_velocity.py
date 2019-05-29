@@ -1,6 +1,6 @@
 import numpy as np
 import itertools
-from functions import *
+from functions_velocity import *
 import matplotlib.pyplot as plt
 import matplotlib.animation as animation
 from timeit import default_timer as timer
@@ -10,7 +10,7 @@ from timeit import default_timer as timer
 #################### INPUTS ####################
 
 # prediction/control horizons, time scale
-H_p = 2 # number of steps in prediction horizon
+H_p = 3 # number of steps in prediction horizon
 H_c = 1 # number of steps in control horizon
 dt = .2 # seconds in one time step (length of step is v*dt so smaller dt means smaller steps, "greater resolution", with same velocity)
 
@@ -31,8 +31,8 @@ robot_dim = [robot_length, robot_width]
 v_max = 1 # max velocity
 phi_max = 30 # max steering angle in degrees
 
-num_v = 4 # number of potential velocity commands
-num_phi = 5 # number of potential steering angle commands, must be odd to allow for 0deg steer
+num_v = 2 # number of potential velocity commands
+num_phi = 3 # number of potential steering angle commands, must be odd to allow for 0deg steer
 
 # other control
 circles_radius = v_max*dt*0.7
@@ -148,19 +148,19 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
 
     optimal_sequence = printAllKLength(combos, H_p) # find control sequence with lowest score
 
-    # print()
-    # print("-------- Control selection --------")
+    print()
+    print("-------- Control selection --------")
 
-    # # display step time vs. execution time
-    # sim_time = k*dt + dt
-    # print("time step =", sim_time, "s")
-    # execution_time = timer()-start
-    # run_time = run_time + execution_time
-    # print("run time =", run_time ,"s", "(execution time =", execution_time,"s )")
-    # if execution_time > dt: # execution must be faster than desired time step or else can't apply control in time
-    #     print("! EXECUTION TOO SLOW !")
+    # display step time vs. execution time
+    sim_time = k*dt + dt
+    print("time step =", sim_time, "s")
+    execution_time = timer()-start
+    run_time = run_time + execution_time
+    print("run time =", run_time ,"s", "(execution time =", execution_time,"s )")
+    if execution_time > dt: # execution must be faster than desired time step or else can't apply control in time
+        print("! EXECUTION TOO SLOW !")
 
-    # print(optimal_sequence)
+    print(optimal_sequence)
 
 
     # plot future path
