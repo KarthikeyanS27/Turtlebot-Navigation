@@ -91,7 +91,7 @@ waypointCheck = False
 # 0 --> dynamic with future path
 # 1 --> step-wise with future path
 # 2 --> step-wise, no future path
-active_plot = 0
+active_plot = 1
 
 
 
