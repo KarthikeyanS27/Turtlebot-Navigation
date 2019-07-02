@@ -17,7 +17,8 @@ initialHeading = 0 # heading in degrees
 goal = [140, 120] # goal location
 goalThresh = 5 # minimum distance to goal to be considered at goal
 
-waypoints = [ [78, 103], [115, 50] ] # checkpoints along the way to the goal
+waypoints = [ [78, 103], [115, 50] ] # checkpoints along the way to the goal, must be in order to visit (first = index 0)
+#waypoints = []
 wayPointThresh = 5 # minimum distance to waypoint to be considered at waypoint
 
 # robot dimensions
@@ -25,13 +26,13 @@ robot_length = 10
 robot_width = 5
 robot_dim = [robot_length, robot_width]
 detection_radius = 4
-robot_memory = 10
+robot_memory = 0
 
 array = csvtoarray("floorplan/floorplan.csv")
 obstacles, dim = arrayToObstacles(array)
 
 # intitial obstacles ([x_1, y_1], [x_2, y_2], ... , [x_n, y_n]), all circular
-obstacles = [[105, 75], [100, 70]]
+obstacles = [[100, 70], [105, 75]] 
 obstacle_radius = 4 # radius of actual obstacle
 #min_buffer = math.sqrt( (robot_width/2)**2 + (robot_length/2)**2 ) # distance to avoid obstacle by
 min_buffer = 3
@@ -76,11 +77,15 @@ run_once = False # toggle True/False to execute code once or as many times as se
 
 # miscellaenous
 k = 0 # initialize time steps
-goalReached=False # initialize if at goal
+goalReached=False # initialize flag for if at goal
 avoidance_radius = obstacle_radius + min_buffer # min distance to be from center of obstacle, used for calculation/plotting
 run_time = 0 # initialize track of how long program has run for as sum of execution loops
+
 num_wayPoints = len(waypoints)
-wayPointsReached = 0
+wayPointsReached = False
+if num_wayPoints == 0:
+    wayPointsReached = True
+waypointCheck = False
 
 # plotting switch
 # 0 --> dynamic with future path
@@ -96,18 +101,19 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
 
     start = timer()
 
+    # dynamically change prediction horizon
     if current_v < v_thresh:
         H_p = 2
         H_c = 1
-        num_phi = 7
-        num_a = 5
+        num_phi = 4
+        num_a = 3
         phi_sequence = gen_sequence_phi(num_phi, phi_max) # sequence of potential steering angle input commands
         a_sequence = gen_sequence_a(num_a, a_maxThrottle, a_maxBrake)
     
     elif current_v >= v_thresh:
         H_p = 3
         H_c = 1
-        num_phi = 5
+        num_phi = 4
         num_a = 3
         phi_sequence = gen_sequence_phi(num_phi, phi_max) # sequence of potential steering angle input commands
         a_sequence = gen_sequence_a(num_a, a_maxThrottle, a_maxBrake)
@@ -259,7 +265,10 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
         obstacles.extend(new_obstacles)
 
     # check for waypoints until all reached, then start checking if goal is reached
-    waypointCheck = goalCheck(x, y, waypoints[-num_wayPoints], wayPointThresh)
+
+    if num_wayPoints != 0:
+        waypointCheck = goalCheck(x, y, waypoints[-num_wayPoints], wayPointThresh)
+
     if waypointCheck == True:
         num_wayPoints = num_wayPoints - 1
 
