@@ -17,8 +17,10 @@ initialHeading = 0 # heading in degrees
 goal = [140, 120] # goal location
 goalThresh = 5 # minimum distance to goal to be considered at goal
 
-waypoints = [ [78, 103], [115, 50] ] # checkpoints along the way to the goal, must be in order to visit (first = index 0)
-#waypoints = []
+# checkpoints along the way to the goal, must be in order to visit (first = index 0)
+#waypoints = [ [78, 103], [115, 50] ] # floorplan nav
+#waypoints = [[29, 55]] # u-turn
+waypoints = []
 wayPointThresh = 5 # minimum distance to waypoint to be considered at waypoint
 
 # robot dimensions
@@ -26,37 +28,41 @@ robot_length = 10
 robot_width = 5
 robot_dim = [robot_length, robot_width]
 detection_radius = 4
-robot_memory = 0
+robot_memory = 12
 
 array = csvtoarray("floorplan/floorplan.csv")
 obstacles, dim = arrayToObstacles(array)
 
 # intitial obstacles ([x_1, y_1], [x_2, y_2], ... , [x_n, y_n]), all circular
-obstacles = [[100, 70], [105, 75]] 
-obstacle_radius = 4 # radius of actual obstacle
+#obstacles = [[100, 70], [105, 75]] # floorplan nav
+#obstacles = [[78, 53],[69, 67],[63, 68],[48, 67],[40, 54], [55, 69], [73, 59], [43, 61], [71, 62]] # u-turn
+#obstacles = [[70, 22],[56.5, 30]] # circle-jump
+obstacles = []
+obstacle_radius = 5 # radius of actual obstacle
 #min_buffer = math.sqrt( (robot_width/2)**2 + (robot_length/2)**2 ) # distance to avoid obstacle by
 min_buffer = 3
 
-
-lines = [ [[80, 0], [80, 90]], [[80, 120],[80, 140]], [[115, 65],[115, 140]], [[115, 35],[115, 0]], [[80, 140], [115,140]], [[80,0],[115,0]]  ]
-line_buffer = 5
+#lines = [ [[80, 0], [80, 90]], [[80, 120],[80, 140]], [[115, 65],[115, 140]], [[115, 35],[115, 0]], [[80, 140], [115,140]], [[80,0],[115,0]]  ] # floorplan nav
+#lines = [ [[80, 120],[80, 140]] ]
+lines = []
+line_buffer = 3
 lines_buffered = []
 for line in lines:
     lines_buffered.append(buffer_for_line(line, line_buffer))
 
 # generate control sequences    
-v_max = 5 # max velocity
+v_max = 4 # max velocity
 v_min = 0.01 # min desired velocity
 a_maxThrottle = 2 # max acceleration input
 a_maxBrake = -2 # max brake/reverse input
-phi_max = 50 # max steering angle in degrees
+phi_max = 40 # max steering angle in degrees
 
 # num_phi = 3 # number of potential steering angle commands, must be odd to allow for 0deg steer
 # num_a = 3 # number of potential acceleration commands, must be >=3 to allow for reverse, zero change, and at least one command to go forward
 v_thresh = 0.75*v_max # cut off between slow and fast control (slow has more steering but smaller H_p, fast less steering but more H_p)
 
 # other control
-previousLoc_radius = v_max*dt*0.875
+previousLoc_radius = 12
 
 
 #################### SETUP/TESTING ####################
@@ -103,17 +109,17 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
 
     # dynamically change prediction horizon
     if current_v < v_thresh:
-        H_p = 2
+        H_p = 3
         H_c = 1
-        num_phi = 4
-        num_a = 3
+        num_phi = 7
+        num_a = 5
         phi_sequence = gen_sequence_phi(num_phi, phi_max) # sequence of potential steering angle input commands
         a_sequence = gen_sequence_a(num_a, a_maxThrottle, a_maxBrake)
     
     elif current_v >= v_thresh:
         H_p = 3
         H_c = 1
-        num_phi = 4
+        num_phi = 5
         num_a = 3
         phi_sequence = gen_sequence_phi(num_phi, phi_max) # sequence of potential steering angle input commands
         a_sequence = gen_sequence_a(num_a, a_maxThrottle, a_maxBrake)
@@ -124,7 +130,7 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
     # limit obstacles to those in range of potential collision
     current_position = [x[-1], y[-1]]
     obstacles_in_range, scan_zone = find_obstacles_in_range(obstacles, current_position, v_max, a_maxThrottle, a_maxBrake, dt, H_p)
-
+    lines_in_range, scan_zone = find_lines_in_range(lines, lines_buffered, current_position, v_max, a_maxThrottle, a_maxBrake, dt, H_p)
 
     print("\n================== k =",k,"=====================")
     print("_______________Control inputs_________________")
@@ -162,9 +168,9 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
         # print prefix 
         if (l_seq == 0):
             if wayPointsReached == False:
-                J_a, J_phi, J_dist, J_obs, J_lineCross, J_vmin, J_vmax, J_reverse, J_fast, J_previousLoc = calc_score(prefix, dt, H_p, x, y, a, v_max, v_min, current_v, current_heading, k, waypoints[-num_wayPoints], obstacles_in_range, lines, lines_buffered, avoidance_radius, previousLoc_radius, robot_memory, detection_radius)
+                J_a, J_phi, J_dist, J_obs, J_lineCross, J_vmin, J_vmax, J_reverse, J_fast, J_previousLoc = calc_score(prefix, dt, H_p, x, y, a, v_max, v_min, current_v, current_heading, k, waypoints[-num_wayPoints], obstacles_in_range, lines_in_range, avoidance_radius, previousLoc_radius, robot_memory, detection_radius)
             else:
-                J_a, J_phi, J_dist, J_obs, J_lineCross, J_vmin, J_vmax, J_reverse, J_fast, J_previousLoc = calc_score(prefix, dt, H_p, x, y, a, v_max, v_min, current_v, current_heading, k, goal, obstacles_in_range, lines, lines_buffered, avoidance_radius, previousLoc_radius, robot_memory, detection_radius)
+                J_a, J_phi, J_dist, J_obs, J_lineCross, J_vmin, J_vmax, J_reverse, J_fast, J_previousLoc = calc_score(prefix, dt, H_p, x, y, a, v_max, v_min, current_v, current_heading, k, goal, obstacles_in_range, lines_in_range, avoidance_radius, previousLoc_radius, robot_memory, detection_radius)
             newScore = J_a + J_phi + J_dist + J_obs + J_lineCross + J_vmin + J_vmax + J_reverse + J_fast + J_previousLoc 
             if newScore < score:
                 better = prefix.copy()

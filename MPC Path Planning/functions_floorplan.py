@@ -39,6 +39,58 @@ def find_obstacles_in_range(obstacles, current_position, v_max, a_maxThrottle, a
 
     return obstacles_in_range, r_max
 
+def find_lines_in_range(lines, lines_buffered, current_position, v_max, a_maxThrottle, a_maxBrake, dt, H_p):
+    lines_in_range = []
+
+    a = max(abs(a_maxThrottle), abs(a_maxBrake))
+    r_max = 0
+
+    for i in range(H_p):
+        # r_max = r_max + v_max*dt + 0.5*a_maxThrottle*(dt**2) # use for general case
+        r_max = r_max + v_max*dt # use if certain won't go over v_max
+
+    for newLine in lines:
+        line_dist = dist_to_line(newLine[0][0], newLine[0][1], newLine[1][0], newLine[1][1], current_position[0], current_position[1])
+        if line_dist <= r_max:
+            lines_in_range.append(newLine)
+
+    for packed_line in lines_buffered:
+        for newLine in packed_line:
+            line_dist = dist_to_line(newLine[0][0], newLine[0][1], newLine[1][0], newLine[1][1], current_position[0], current_position[1])
+            if line_dist <= r_max:
+                lines_in_range.append(newLine)
+
+    return lines_in_range, r_max
+
+def dist_to_line(x1, y1, x2, y2, x3, y3): # x3,y3 is the point
+    px = x2-x1
+    py = y2-y1
+
+    norm = px*px + py*py
+
+    u =  ((x3 - x1) * px + (y3 - y1) * py) / float(norm)
+
+    if u > 1:
+        u = 1
+    elif u < 0:
+        u = 0
+
+    x = x1 + u * px
+    y = y1 + u * py
+
+    dx = x - x3
+    dy = y - y3
+
+    # Note: If the actual distance does not matter,
+    # if you only want to compare what this function
+    # returns to other results of this function, you
+    # can just return the squared distance instead
+    # (i.e. remove the sqrt) to gain a little performance
+
+    dist = (dx*dx + dy*dy)**.5
+
+    return dist
+
 def buffer_for_line(line, line_buffer):
     # read in line
     x1_left = min(line[0][0], line[1][0]) 
@@ -201,23 +253,24 @@ def intersection(a, b, c, d):
     return False   
 
 
-def calc_score(control, dt, H_p, x, y, a, v_max, v_min, current_v, current_heading, k, goal, obstacles, lines, lines_buffered, avoidance_radius, previousLoc_radius, robot_memory, detection_radius):
-    W_a = 1 # generally leave at one if don't mind changes in velocity that much
-    W_phi = 1e3 # increase to tune amount of turning, higher good to prevent going in circles (continuing to turn) but need low enough to have flexible route
-    W_dist = 30 # can be somewhat low because sum_dist already relatively large
-    W_obs = 1 # leave at 1, cost_obs applies weight
-    cost_obs = 1e10 # only gets applied if within obstacle zone
-    W_vmin = 1 # leave at 1, cost_vmin applies weight
-    cost_vmin = 1e5 # only gets applied if velocity below certain threshold
-    W_reverse = 1 # leave at 1, cost_reverse applies weight
-    cost_reverse = 1e8 # keep velocity from going negative
-    W_fast = 30 # increase to make robot want to keep speed closer to max velocity
-    W_previousLoc = 1 # leave at 1, cost_previousLoc applies weight
-    cost_previousLoc = 1e3 # applied whenever path would be within previousLoc_radius of a point in the robot_memory (not the full path, just a certain number of points back)
-    W_vmax = 1 # leave at 1, cost_vmax applies weight
-    cost_vmax = 1e6 # cost whenever velocity goes over max velocity, keep high to prevent from going too fast
-    W_lineCross = 1
-    cost_lineCross = 1e10
+def calc_score(control, dt, H_p, x, y, a, v_max, v_min, current_v, current_heading, k, goal, obstacles, lines_in_range, avoidance_radius, previousLoc_radius, robot_memory, detection_radius):
+    W_a = 1                 # generally leave at one if don't mind changes in velocity that much
+    W_phi = 1e3               # increase to tune amount of turning, higher good to prevent going in circles (continuing to turn) but need low enough to have flexible route
+    W_dist = 2e1              # can be somewhat low because sum_dist already relatively large
+    W_obs = 1               # leave at 1, cost_obs applies weight
+    cost_obs = 2e10         # only gets applied if within obstacle zone
+    W_lineCross = 1         # leave at 1, cost_lineCross applies weight
+    cost_lineCross = 1e10   # applied whenever path would cross over line obstacle
+    W_vmin = 1              # leave at 1, cost_vmin applies weight
+    cost_vmin = 1e3           # only gets applied if velocity below certain threshold
+    W_vmax = 1              # leave at 1, cost_vmax applies weight
+    cost_vmax = 1e6         # cost whenever velocity goes over max velocity, keep high to prevent from going too fast
+    W_reverse = 1           # leave at 1, cost_reverse applies weight
+    cost_reverse = 1e2        # keep velocity from going negative
+    W_fast = 1e1              # increase to make robot want to keep speed closer to max velocity
+    W_previousLoc = 1       # leave at 1, cost_previousLoc applies weight
+    cost_previousLoc = 1e5  # applied whenever path would be within previousLoc_radius of a point in the robot_memory (not the full path, just a certain number of points back)
+    
 
     # velocity change
     sum_fast = 0
@@ -270,20 +323,11 @@ def calc_score(control, dt, H_p, x, y, a, v_max, v_min, current_v, current_headi
                 sum_obs = sum_obs + cost_obs
 
         # check if crossing any lines
-        for line in lines:
+        for line in lines_in_range:
             pos1 = [x_control[k+i], y_control[k+i]]
             pos2 = [x2, y2]
             if intersection(line[0],line[1],pos1,pos2):
                 sum_lineCross = sum_lineCross + cost_lineCross
-
-        # buffer lines
-        for packed_line in lines_buffered:
-            for buffered_line in packed_line:
-                pos1 = [x_control[k+i], y_control[k+i]]
-                pos2 = [x2, y2]
-                if intersection(buffered_line[0],buffered_line[1],pos1,pos2):
-                    sum_lineCross = sum_lineCross + cost_lineCross
-
 
         # keep robot moving within desired velocity range
         if abs(new_v) < v_min:
@@ -299,7 +343,7 @@ def calc_score(control, dt, H_p, x, y, a, v_max, v_min, current_v, current_headi
         if path_length < robot_memory:
             memory_length = path_length
 
-        for j in range(path_length-memory_length, path_length-1):
+        for j in range(path_length-memory_length, path_length-5):
             dist_previousLoc = math.sqrt( (x2-x_control[j])**2 +(y2-y_control[j])**2 )
             if dist_previousLoc <= previousLoc_radius:
                 sum_previousLoc = sum_previousLoc + cost_previousLoc
