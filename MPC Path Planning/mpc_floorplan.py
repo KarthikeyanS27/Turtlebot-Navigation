@@ -18,9 +18,9 @@ goal = [140, 120] # goal location
 goalThresh = 5 # minimum distance to goal to be considered at goal
 
 # checkpoints along the way to the goal, must be in order to visit (first = index 0)
-#waypoints = [ [78, 103], [115, 50] ] # floorplan nav
+waypoints = [ [78, 103], [115, 50] ] # floorplan nav
 #waypoints = [[29, 55]] # u-turn
-waypoints = []
+#waypoints = []
 wayPointThresh = 5 # minimum distance to waypoint to be considered at waypoint
 
 # robot dimensions
@@ -28,23 +28,23 @@ robot_length = 10
 robot_width = 5
 robot_dim = [robot_length, robot_width]
 detection_radius = 4
-robot_memory = 12
+robot_memory = 0
 
 array = csvtoarray("floorplan/floorplan.csv")
 obstacles, dim = arrayToObstacles(array)
 
 # intitial obstacles ([x_1, y_1], [x_2, y_2], ... , [x_n, y_n]), all circular
-#obstacles = [[100, 70], [105, 75]] # floorplan nav
+obstacles = [[100, 70], [105, 75]] # floorplan nav
 #obstacles = [[78, 53],[69, 67],[63, 68],[48, 67],[40, 54], [55, 69], [73, 59], [43, 61], [71, 62]] # u-turn
 #obstacles = [[70, 22],[56.5, 30]] # circle-jump
-obstacles = []
+#obstacles = []
 obstacle_radius = 5 # radius of actual obstacle
 #min_buffer = math.sqrt( (robot_width/2)**2 + (robot_length/2)**2 ) # distance to avoid obstacle by
 min_buffer = 3
 
-#lines = [ [[80, 0], [80, 90]], [[80, 120],[80, 140]], [[115, 65],[115, 140]], [[115, 35],[115, 0]], [[80, 140], [115,140]], [[80,0],[115,0]]  ] # floorplan nav
+lines = [ [[80, 0], [80, 90]], [[80, 120],[80, 140]], [[115, 65],[115, 140]], [[115, 35],[115, 0]], [[80, 140], [115,140]], [[80,0],[115,0]]  ] # floorplan nav
 #lines = [ [[80, 120],[80, 140]] ]
-lines = []
+#lines = []
 line_buffer = 3
 lines_buffered = []
 for line in lines:
@@ -109,7 +109,7 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
 
     # dynamically change prediction horizon
     if current_v < v_thresh:
-        H_p = 3
+        H_p = 2
         H_c = 1
         num_phi = 7
         num_a = 5
@@ -149,7 +149,7 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
     def printAllKLength(set, l_seq):
 
         initialScore = 1e100
-        optimal = [""]*k
+        optimal = [""]*l_seq
         optimal.append(initialScore) 
       
         n = len(set)  
@@ -275,7 +275,7 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
     if num_wayPoints != 0:
         waypointCheck = goalCheck(x, y, waypoints[-num_wayPoints], wayPointThresh)
 
-    if waypointCheck == True:
+    if waypointCheck == True and num_wayPoints > 0:
         num_wayPoints = num_wayPoints - 1
 
     if num_wayPoints == 0:

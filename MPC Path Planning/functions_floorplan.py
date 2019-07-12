@@ -62,6 +62,7 @@ def find_lines_in_range(lines, lines_buffered, current_position, v_max, a_maxThr
 
     return lines_in_range, r_max
 
+# https://stackoverflow.com/questions/849211/shortest-distance-between-a-point-and-a-line-segment
 def dist_to_line(x1, y1, x2, y2, x3, y3): # x3,y3 is the point
     px = x2-x1
     py = y2-y1
@@ -272,7 +273,7 @@ def calc_score(control, dt, H_p, x, y, a, v_max, v_min, current_v, current_headi
     cost_previousLoc = 1e5  # applied whenever path would be within previousLoc_radius of a point in the robot_memory (not the full path, just a certain number of points back)
     
 
-    # velocity change
+    # fast velocity
     sum_fast = 0
     for i in range(H_p):
         new_v = calc_v(current_v, control[i][0], dt)
