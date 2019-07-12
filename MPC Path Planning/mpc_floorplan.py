@@ -181,6 +181,8 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
         # One by one add all characters  
         # from set and recursively  
         # call for k equals to k-1 
+        print("-----------")
+        print(best[-1])
         for i in range(n): 
 
             # Next character of input added 
@@ -190,6 +192,9 @@ while(goalReached==False): # run until goal is reached or while loop broken for 
             # k is decreased, because  
             # we have added a new character
             new, costs = printAllKLengthRec(set, newPrefix, n, l_seq - 1, optimal)
+            print("")
+            print(best[-1])
+            print(new[-1])
             if new[-1] < best[-1]:
                 best = new
                 final_costs = costs
