@@ -5,9 +5,9 @@ This repository contains autonomous navigation research work conducted at the Na
 ## Sample Usage
 ### Autonomous Navigation to User Destination
 User input determine which location robot will navigate to next. SLAM map must be created first. 
-<img src="https://github.com/apletta/Turtlebot-Navigation/blob/master/Sample-Pics/nav_route2.png" alt="empty simulation environment" width="60%">
+<img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/nav_route2.png" alt="autonomous navigation" width="100%">
 
 ### Teleop SLAM
 
 
-<img src="https://github.com/apletta/Turtlebot-Navigation/blob/master/README/pics/nav_route2.png" alt="empty simulation environment" width="60%">
+<img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/nav_route2.png" alt="autonomous navigation" width="100%">
