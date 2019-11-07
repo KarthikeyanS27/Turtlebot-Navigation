@@ -2,7 +2,7 @@
 
 This repository contains autonomous navigation research work conducted at the National University of Singapore (NUS) during Summer 2019. Work was developed in Python for ROS/Gazebo simulation environment. For complete written project report, see AutonomousNavigationBasedOnTurtleBot.pdf
 
-This research project also produced a custom ROS package, [ackermann_nav-ROS](https://github.com/apletta/ackermann_nav-ROS).
+This research project also produced a custom ROS package for four wheeled autonomous vehicles. For more information please see [ackermann_nav-ROS](https://github.com/apletta/ackermann_nav-ROS).
 
 ## Sample Usage
 Main categories are:
