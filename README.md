@@ -28,7 +28,7 @@ Implementation of teleop control for mapping a simulation environment using gmap
 
 ### Multi-Robot SLAM
 
-SLAM readings from multiple robots can be fused into a single map of the environment. 
+SLAM readings from multiple robots fused into a single map of the environment. 
 <img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/multi-slam.png" alt="multi-slam" width="100%"> 
 
 
