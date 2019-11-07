@@ -28,14 +28,11 @@ Implementation of teleop control for mapping a simulation environment using gmap
 ### Multi-Robot SLAM
 
 SLAM readings from multiple robots can be fused into a single map of the environment. 
-<img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/map0.png" alt="SLAM robot 1" width="25%"> <img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/map1.png" alt="SLAM robot 2" width="25%"> <img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/map2.png" alt="SLAM robot 3" width="25%">
-
-Merged map:
-<img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/merged-map.png" alt="merged map" width="25%">
+<img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/multi-slam.png" alt="multi-slam" width="100%"> 
 
 
 ### Model Predictive Control Path and Speed Planning
 
 Example of path planning and speed control for adaptive MPC. On-line computation to dynamically avoid obstacles while navigation towards goal/checkpoint location.  
-<img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/cartographer.png" alt="autonomous navigation" width="100%">
+<img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/mpc.png" alt="on-line adaptive mpc" width="100%">
 
