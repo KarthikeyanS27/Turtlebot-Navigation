@@ -34,6 +34,6 @@ SLAM readings from multiple robots fused into a single map of the environment.
 
 ### Model Predictive Control Path and Speed Planning
 
-Example of path planning and speed control for adaptive MPC. On-line computation to dynamically avoid obstacles while navigation towards goal/checkpoint location.  
+Example of path planning and speed control for adaptive horizon MPC. On-line computation to dynamically avoid obstacles while navigation towards goal/checkpoint location.  
 <img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/mpc.png" alt="on-line adaptive mpc" width="100%">
 
