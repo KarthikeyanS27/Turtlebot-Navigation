@@ -18,10 +18,11 @@ User input determine which location robot will navigate to next. SLAM map must b
 <img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/nav_route.png" alt="autonomous navigation" width="100%">
 
 ### SLAM
-Experimentation with and evaluation of Google Cartographer
+Experimentation with and evaluation of Google Cartographer.
 <img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/cartographer.jpg" alt="google cartographer" width="100%">
 
-Implementation of teleop control for mapping a simulation environment using gmapping SLAM. 
+Implementation of teleop control for mapping a simulation environment using gmapping SLAM.
+
 <img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/teleop-slam.jpg" alt="teleop slam 1" width="40%"> <img src="https://github.com/KarthikeyanS27/Turtlebot-Navigation/blob/master/Sample%20Pics/world_city_slam.png" alt="teleop slam 2" width="40%">
 
 
